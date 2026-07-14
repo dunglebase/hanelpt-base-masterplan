@@ -24,7 +24,6 @@
   --shadow:0 1px 2px rgba(0,35,108,.06), 0 12px 30px -18px rgba(0,35,108,.30);
   --shadow-strong:0 12px 34px -20px rgba(0,35,108,.42);
   --topH:72px;
-  --table-sticky-top:138px;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth; scroll-padding-top:170px; -webkit-text-size-adjust:100%}
@@ -535,22 +534,6 @@ body.modal-open{overflow:hidden}
 .response-editor-empty{border:1px dashed var(--line);border-radius:10px;background:#FBFCFE;padding:20px;text-align:center;color:var(--muted);font-size:11.5px}
 
 
-/* ---------- FREEZE TABLE HEADER ---------- */
-@media(min-width:821px){
-  .phase .card{overflow:visible}
-  .phase table{border-collapse:separate;border-spacing:0}
-  .phase thead th{
-    position:sticky;
-    top:var(--table-sticky-top);
-    z-index:32;
-    background:#EDF5FC;
-    box-shadow:0 1px 0 #C9DDEE,0 10px 18px -18px rgba(0,35,108,.72);
-  }
-  .phase thead th:first-child{border-top-left-radius:11px}
-  .phase thead th:last-child{border-top-right-radius:11px}
-}
-
-
 /* ---------- QUẢN LÝ CÔNG VIỆC TRONG KẾ HOẠCH CHI TIẾT ---------- */
 .phase-add-btn{
   display:none;margin-left:4px;border:1px solid #BFD6EB;background:#fff;color:var(--base-deep);
@@ -591,6 +574,38 @@ body.editing .task-actions{display:inline-flex}
   .task-action-btn{width:30px;height:30px}
   .task-form-grid{grid-template-columns:1fr}
   .task-form-grid .wide{grid-column:auto}
+}
+
+
+/* ---------- TASK MANAGEMENT UX V2 ---------- */
+body.editing tr[data-edit-key]{cursor:pointer;position:relative}
+body.editing tr[data-edit-key]:hover{background:#EAF4FD!important;box-shadow:inset 3px 0 0 var(--base)}
+body.editing tr[data-edit-key]:focus-visible{outline:2px solid var(--base);outline-offset:-2px;background:#EAF4FD!important}
+body.editing tr[data-edit-key] td:not(.cell-editable){transition:background .15s}
+body:not(.editing) .cell-edit-btn{display:none}
+body.editing .cell-edit-btn{display:inline-flex}
+.phase-empty-row td{padding:24px!important;text-align:center;color:var(--muted);font-size:12px;background:#FBFDFF}
+.phase-empty-row b{display:block;color:var(--ink2);font-size:13px;margin-bottom:3px}
+.task-editor-foot{justify-content:space-between}
+.task-editor-foot-left,.task-editor-foot-right{display:flex;align-items:center;gap:9px}
+.btn-danger{color:var(--komex)!important;border-color:#F1C3C6!important;background:#FFF8F8!important}
+.btn-danger:hover{background:var(--komex-soft)!important;border-color:var(--komex)!important;color:var(--komex)!important}
+.btn-success-soft{color:var(--done)!important;border-color:#BFE3CF!important;background:#F5FBF7!important}
+.btn-success-soft:hover{background:var(--done-soft)!important;border-color:var(--done)!important;color:var(--done)!important}
+.task-delete-toast{position:fixed;z-index:130;left:50%;bottom:20px;transform:translateX(-50%);width:min(620px,calc(100% - 28px));background:var(--ink);color:#fff;border-radius:12px;box-shadow:0 20px 55px rgba(0,35,108,.34);padding:11px 12px 11px 15px;display:flex;align-items:center;gap:12px}
+.task-delete-toast[hidden]{display:none!important}
+.task-delete-toast span{font-size:11.5px;line-height:1.45;flex:1;min-width:0}
+.task-delete-toast button{font:inherit;font-size:11.5px;font-weight:800;border:0;border-radius:8px;padding:8px 11px;cursor:pointer;white-space:nowrap;background:#fff;color:var(--ink)}
+.task-delete-toast button:hover{background:var(--base-soft);color:var(--base-deep)}
+.task-delete-toast .toast-close{width:28px;height:28px;padding:0;background:rgba(255,255,255,.12);color:#fff;font-size:17px}
+.task-delete-toast .toast-close:hover{background:rgba(255,255,255,.2);color:#fff}
+@media(max-width:820px){
+  .task-editor-foot{flex-direction:column;align-items:stretch}
+  .task-editor-foot-left,.task-editor-foot-right{width:100%}
+  .task-editor-foot-left .btn,.task-editor-foot-right .btn{flex:1;justify-content:center}
+  .task-delete-toast{bottom:10px;flex-wrap:wrap;align-items:stretch}
+  .task-delete-toast span{flex:1 1 calc(100% - 40px)}
+  .task-delete-toast #undoDeleteTask{flex:1 1 100%}
 }
 
 /* ============ TABLET ============ */
@@ -1505,10 +1520,22 @@ footer{border-color:#C9DDEE;color:#5D7288}
       </section>
     </div>
     <footer class="task-editor-foot">
-      <button class="btn" id="taskEditorCancel" type="button">Huỷ</button>
-      <button class="btn btn-primary" id="taskEditorSave" type="button">Lưu thay đổi</button>
+      <div class="task-editor-foot-left">
+        <button class="btn btn-success-soft" id="taskEditorAddChild" type="button" hidden>＋ Thêm công việc con</button>
+        <button class="btn btn-danger" id="taskEditorDelete" type="button" hidden>Xoá công việc</button>
+      </div>
+      <div class="task-editor-foot-right">
+        <button class="btn" id="taskEditorCancel" type="button">Huỷ</button>
+        <button class="btn btn-primary" id="taskEditorSave" type="button">Lưu thay đổi</button>
+      </div>
     </footer>
   </section>
+</div>
+
+<div class="task-delete-toast" id="taskDeleteToast" hidden>
+  <span id="taskDeleteToastText">Đã xoá công việc.</span>
+  <button id="undoDeleteTask" type="button">Hoàn tác</button>
+  <button class="toast-close" id="closeDeleteToast" type="button" aria-label="Đóng">×</button>
 </div>
 
 <div class="quick-savebar" id="quickSavebar" hidden>
@@ -2270,12 +2297,12 @@ footer{border-color:#C9DDEE;color:#5D7288}
     return '<div class="cell-edit-wrap"><div class="cell-edit-content">'+body+'</div>'+cellEditButton(key,"responses","Chỉnh sửa hướng xử lý")+'</div>';
   }
 
-  function taskActionButtons(key,hasChildren,isSub){
+  function taskActionButtons(key,hasChildren,isSub,itemId){
     return '<span class="task-actions" aria-label="Quản lý công việc">'+
-      '<button class="task-action-btn edit-task" type="button" data-edit-task="'+key+'" title="Chỉnh sửa toàn bộ công việc" aria-label="Chỉnh sửa công việc">'+
+      '<button class="task-action-btn edit-task" type="button" data-edit-task="'+key+'" data-item-id="'+esc(itemId||"")+'" title="Chỉnh sửa toàn bộ công việc" aria-label="Chỉnh sửa công việc">'+
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4Z"/></svg></button>'+
-      (!isSub?'<button class="task-action-btn add-child" type="button" data-add-subtask="'+key+'" title="Thêm công việc con" aria-label="Thêm công việc con">＋</button>':'')+
-      '<button class="task-action-btn delete" type="button" data-delete-task="'+key+'" title="Xoá công việc" aria-label="Xoá công việc">'+
+      (!isSub?'<button class="task-action-btn add-child" type="button" data-add-subtask="'+key+'" data-parent-id="'+esc(itemId||"")+'" title="Thêm công việc con" aria-label="Thêm công việc con">＋</button>':'')+
+      '<button class="task-action-btn delete" type="button" data-delete-task="'+key+'" data-delete-id="'+esc(itemId||"")+'" title="Xoá công việc" aria-label="Xoá công việc">'+
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg></button>'+
     '</span>';
   }
@@ -2286,6 +2313,7 @@ footer{border-color:#C9DDEE;color:#5D7288}
     main.innerHTML="";
     var shown=0, totalItems=allItems().length;
     var filtering = filters.q || filters.status!=="all" || filters.owner!=="all" || filters.dateMode!=="all";
+    var editingNow=document.body.classList.contains("editing");
 
     data.phases.forEach(function(p,pi){
       var rows=[];
@@ -2296,7 +2324,7 @@ footer{border-color:#C9DDEE;color:#5D7288}
         var tOk=match(t);
         if(tOk||anySub) rows.push({t:t,key:k,subs:subs,tOk:tOk});
       });
-      if(!rows.length) return;
+      if(!rows.length && !editingNow) return;
 
       var pct=phaseProgress(p);
       var sec=document.createElement("section");
@@ -2324,7 +2352,7 @@ footer{border-color:#C9DDEE;color:#5D7288}
         var t=r.t, k=r.key, hasSubs=t.subs && t.subs.length;
         var isOpen = open[k]!==undefined ? open[k] : !!filtering;
         shown++;
-        html+='<tr class="task'+(overdue(t)?" late":"")+'" data-edit-key="'+k+'">'+
+        html+='<tr class="task'+(overdue(t)?" late":"")+'" data-edit-key="'+k+'" data-item-id="'+esc(t.id||"")+'" tabindex="0" title="'+(editingNow?'Nhấn để chỉnh sửa công việc':'')+'">'+
           '<td class="col-name"><span class="tw">'+
             (hasSubs
               ? '<button class="caret'+(isOpen?" open":"")+'" data-toggle="'+k+'" aria-label="Mở/đóng việc con"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>'
@@ -2332,7 +2360,7 @@ footer{border-color:#C9DDEE;color:#5D7288}
             '<span class="task-name-line"><span class="tname">'+esc(t.name)+
               (t.milestone? '<span class="pill-ms">'+esc(t.milestone)+'</span>':'')+
               (t.link? ' <a class="linkico" href="'+esc(t.link)+'" target="_blank" rel="noopener" aria-label="Mở link công việc" title="Mở link đính kèm">↗</a>':'')+
-            '</span>'+taskActionButtons(k,hasSubs,false)+'</span>'+cellEditButton(k,"link","Chỉnh sửa link đính kèm")+'</span></td>'+
+            '</span>'+taskActionButtons(k,hasSubs,false,t.id)+'</span>'+cellEditButton(k,"link","Chỉnh sửa link đính kèm")+'</span></td>'+
           '<td class="col-owner">'+ownerCell(t,k)+'</td>'+
           '<td class="col-start">'+dateCell(t,k,"start")+'</td>'+
           '<td class="col-due" data-label="Hạn">'+dateCell(t,k,"due")+'</td>'+
@@ -2345,8 +2373,8 @@ footer{border-color:#C9DDEE;color:#5D7288}
         r.subs.forEach(function(x){
           if(!r.tOk && !x.ok) return;
           shown++;
-          html+='<tr class="sub'+(isOpen?"":" hidden")+(overdue(x.s)?" late":"")+'" data-parent="'+k+'" data-edit-key="'+x.key+'">'+
-            '<td class="col-name"><span class="tw"><span class="task-name-line"><span class="sname">'+esc(x.s.name)+(x.s.link? ' <a class="linkico" href="'+esc(x.s.link)+'" target="_blank" rel="noopener" aria-label="Mở link công việc" title="Mở link đính kèm">↗</a>':'')+'</span>'+taskActionButtons(x.key,false,true)+'</span>'+cellEditButton(x.key,"link","Chỉnh sửa link đính kèm")+'</span></td>'+
+          html+='<tr class="sub'+(isOpen?"":" hidden")+(overdue(x.s)?" late":"")+'" data-parent="'+k+'" data-edit-key="'+x.key+'" data-item-id="'+esc(x.s.id||"")+'" tabindex="0" title="'+(editingNow?'Nhấn để chỉnh sửa công việc con':'')+'">'+
+            '<td class="col-name"><span class="tw"><span class="task-name-line"><span class="sname">'+esc(x.s.name)+(x.s.link? ' <a class="linkico" href="'+esc(x.s.link)+'" target="_blank" rel="noopener" aria-label="Mở link công việc" title="Mở link đính kèm">↗</a>':'')+'</span>'+taskActionButtons(x.key,false,true,x.s.id)+'</span>'+cellEditButton(x.key,"link","Chỉnh sửa link đính kèm")+'</span></td>'+
             '<td class="col-owner">'+ownerCell(x.s,x.key)+'</td>'+
             '<td class="col-start">'+dateCell(x.s,x.key,"start")+'</td>'+
             '<td class="col-due" data-label="Hạn">'+dateCell(x.s,x.key,"due")+'</td>'+
@@ -2358,6 +2386,9 @@ footer{border-color:#C9DDEE;color:#5D7288}
         });
       });
 
+      if(!rows.length){
+        html+='<tr class="phase-empty-row"><td colspan="8"><b>Chưa có công việc phù hợp trong giai đoạn này</b>Nhấn “＋ Thêm công việc” để bổ sung đầu việc mới.</td></tr>';
+      }
       html+='</tbody></table></div>';
       sec.innerHTML=html;
       main.appendChild(sec);
@@ -2429,6 +2460,12 @@ footer{border-color:#C9DDEE;color:#5D7288}
   var quickOpenLink=document.getElementById("quickOpenLink");
   var quickSavebar=document.getElementById("quickSavebar");
   var syncStatus=document.getElementById("syncStatus");
+  var taskEditorAddChild=document.getElementById("taskEditorAddChild");
+  var taskEditorDelete=document.getElementById("taskEditorDelete");
+  var taskDeleteToast=document.getElementById("taskDeleteToast");
+  var taskDeleteToastText=document.getElementById("taskDeleteToastText");
+  var lastDeletedTask=null;
+  var deleteToastTimer=null;
 
   function phaseByKey(k){
     var p=String(k||"").split(".");
@@ -2542,7 +2579,8 @@ footer{border-color:#C9DDEE;color:#5D7288}
     var invalid=false;
     if(!name){ quickTaskName.classList.add("bad"); document.getElementById("quickTaskNameError").classList.add("show"); invalid=true; }
     if(start===null){ quickTaskStart.classList.add("bad"); document.getElementById("quickTaskStartError").classList.add("show"); invalid=true; }
-    if(due===null){ quickTaskDue.classList.add("bad"); document.getElementById("quickTaskDueError").classList.add("show"); invalid=true; }
+    if(due===null){ quickTaskDue.classList.add("bad"); document.getElementById("quickTaskDueError").textContent="Thời hạn chưa hợp lệ."; document.getElementById("quickTaskDueError").classList.add("show"); invalid=true; }
+    if(start && due && due<start){ quickTaskDue.classList.add("bad"); document.getElementById("quickTaskDueError").textContent="Thời hạn không được sớm hơn ngày bắt đầu."; document.getElementById("quickTaskDueError").classList.add("show"); invalid=true; }
     if(link===null){ quickTaskLink.classList.add("bad"); document.getElementById("quickTaskLinkError").classList.add("show"); invalid=true; }
     if(invalid){
       var first=document.querySelector("#quickTaskSection .bad"); if(first) first.focus();
@@ -2586,6 +2624,8 @@ footer{border-color:#C9DDEE;color:#5D7288}
     document.getElementById("taskEditorSave").textContent=labels.save;
     document.getElementById("taskEditorTitle").textContent=isCreate?(isSub?"Công việc con mới":"Công việc mới"):(item.name||"Công việc");
     document.getElementById("taskEditorMeta").textContent=(phase?phase.no+" · ":"")+(isSub?"Công việc con":"Công việc chính")+(item.owner?" · "+item.owner:"")+(item.due?" · Hạn "+fmt(item.due):"");
+    taskEditorDelete.hidden=isCreate || quickEditMode!=="task";
+    taskEditorAddChild.hidden=isCreate || isSub || quickEditMode!=="task";
     quickTaskSection.hidden=!["task","new-task","new-subtask"].includes(quickEditMode);
     quickLinkSection.hidden=quickEditMode!=="link";
     quickIssuesSection.hidden=quickEditMode!=="issues";
@@ -2610,28 +2650,73 @@ footer{border-color:#C9DDEE;color:#5D7288}
     },30);
   }
   function removeItemByKey(k){
-    var parts=String(k||"").split("."),pi=+parts[0],ti=+parts[1];
-    var phase=(data.phases||[])[pi];
-    if(!phase || !phase.tasks || !phase.tasks[ti]) return false;
-    if(parts.length===3){
-      var task=phase.tasks[ti],si=+parts[2];
-      if(!task.subs || !task.subs[si]) return false;
-      task.subs.splice(si,1);
-    }else phase.tasks.splice(ti,1);
-    return true;
+    var item=itemByKey(k);
+    return item ? removeItemById(item.id) : null;
   }
-  function deleteTask(k){
-    var item=itemByKey(k); if(!item) return;
-    var childCount=(item.subs||[]).length;
+  function removeItemById(id){
+    var loc=itemLocationById(id);
+    if(!loc) return null;
+    var snapshot={
+      item:JSON.parse(JSON.stringify(loc.item)),
+      phaseId:loc.phase.id||"",phaseIndex:loc.pi,taskIndex:loc.ti,
+      parentId:loc.parent?loc.parent.id:null,subIndex:loc.si,
+      isSub:!!loc.parent
+    };
+    if(loc.parent) loc.parent.subs.splice(loc.si,1);
+    else loc.phase.tasks.splice(loc.ti,1);
+    return snapshot;
+  }
+  function showDeleteToast(snapshot){
+    lastDeletedTask=snapshot;
+    clearTimeout(deleteToastTimer);
+    taskDeleteToastText.textContent='Đã xoá “'+((snapshot&&snapshot.item&&snapshot.item.name)||'công việc')+'”.';
+    taskDeleteToast.hidden=false;
+    deleteToastTimer=setTimeout(function(){ taskDeleteToast.hidden=true; lastDeletedTask=null; },8000);
+  }
+  function restoreDeletedTask(){
+    if(!lastDeletedTask) return;
+    var snap=lastDeletedTask,phase=null;
+    for(var i=0;i<(data.phases||[]).length;i++) if(data.phases[i].id===snap.phaseId){ phase=data.phases[i]; break; }
+    if(!phase) phase=(data.phases||[])[Math.min(snap.phaseIndex,(data.phases||[]).length-1)];
+    if(!phase) return;
+    if(snap.isSub){
+      var parentLoc=itemLocationById(snap.parentId);
+      if(!parentLoc || !parentLoc.item) return;
+      parentLoc.item.subs=parentLoc.item.subs||[];
+      parentLoc.item.subs.splice(Math.min(snap.subIndex,parentLoc.item.subs.length),0,snap.item);
+      open[parentLoc.pi+"."+parentLoc.ti]=true;
+    }else{
+      phase.tasks=phase.tasks||[];
+      phase.tasks.splice(Math.min(snap.taskIndex,phase.tasks.length),0,snap.item);
+    }
+    clearTimeout(deleteToastTimer);
+    taskDeleteToast.hidden=true;
+    lastDeletedTask=null;
+    markQuickDirty();
+    refresh(true);
+  }
+  function deleteTaskById(id){
+    // Ưu tiên bản mới nhất từ Firebase trước khi xoá để tránh xoá nhầm khi thứ tự đã thay đổi.
+    if(pendingRemotePlan && Array.isArray(pendingRemotePlan.phases)){
+      data=JSON.parse(JSON.stringify(pendingRemotePlan)); pendingRemotePlan=null;
+      ensureItemIds(); normalizeIssueData();
+    }
+    var loc=itemLocationById(id); if(!loc) return;
+    var item=loc.item,childCount=(item.subs||[]).length;
     var msg='Xoá công việc “'+(item.name||"Chưa đặt tên")+'”?';
     if(childCount) msg+='\n\nCông việc này có '+childCount+' công việc con và tất cả cũng sẽ bị xoá.';
-    msg+='\n\nThao tác này sẽ được đồng bộ tới tất cả thiết bị.';
+    msg+='\n\nBạn có thể hoàn tác trong 8 giây sau khi xoá.';
     if(!window.confirm(msg)) return;
-    if(removeItemByKey(k)){
+    var snapshot=removeItemById(id);
+    if(snapshot){
       open={};
+      showDeleteToast(snapshot);
       markQuickDirty();
       refresh(true);
     }
+  }
+  function deleteTask(k){
+    var item=itemByKey(k); if(item) deleteTaskById(item.id);
   }
   function applyPendingRemote(){
     if(!pendingRemotePlan) return;
@@ -2715,6 +2800,20 @@ footer{border-color:#C9DDEE;color:#5D7288}
     if(window.HANEL_FIREBASE) window.HANEL_FIREBASE.seedIfEmpty(JSON.parse(JSON.stringify(data))).catch(function(err){ setSyncState("error","Lỗi đồng bộ",err.message||String(err)); });
   });
 
+  taskEditorAddChild.addEventListener("click",function(){
+    var loc=itemLocationById(quickEditItemId);
+    if(!loc || loc.parent) return;
+    var context={pi:loc.pi,parentId:loc.item.id};
+    closeTaskEditor(false);
+    openTaskEditor(null,"new-subtask",context);
+  });
+  taskEditorDelete.addEventListener("click",function(){
+    var id=quickEditItemId;
+    closeTaskEditor(false);
+    if(id) deleteTaskById(id);
+  });
+  document.getElementById("undoDeleteTask").addEventListener("click",restoreDeletedTask);
+  document.getElementById("closeDeleteToast").addEventListener("click",function(){ clearTimeout(deleteToastTimer); taskDeleteToast.hidden=true; lastDeletedTask=null; });
   document.getElementById("taskEditorClose").addEventListener("click",closeTaskEditor);
   document.getElementById("taskEditorCancel").addEventListener("click",closeTaskEditor);
   taskEditorBackdrop.addEventListener("click",function(e){ if(e.target===taskEditorBackdrop) closeTaskEditor(); });
@@ -2806,17 +2905,30 @@ footer{border-color:#C9DDEE;color:#5D7288}
     document.querySelectorAll("[data-add-subtask]").forEach(function(btn){
       btn.addEventListener("click",function(e){
         e.preventDefault(); e.stopPropagation();
-        var key=btn.getAttribute("data-add-subtask"),parent=itemByKey(key);
-        if(parent) openTaskEditor(null,"new-subtask",{pi:+key.split(".")[0],parentId:parent.id});
+        var parentId=btn.getAttribute("data-parent-id"),loc=itemLocationById(parentId);
+        if(loc && !loc.parent) openTaskEditor(null,"new-subtask",{pi:loc.pi,parentId:parentId});
       });
     });
     document.querySelectorAll("[data-delete-task]").forEach(function(btn){
-      btn.addEventListener("click",function(e){ e.preventDefault(); e.stopPropagation(); deleteTask(btn.getAttribute("data-delete-task")); });
+      btn.addEventListener("click",function(e){ e.preventDefault(); e.stopPropagation(); deleteTaskById(btn.getAttribute("data-delete-id")); });
     });
     document.querySelectorAll("[data-cell-edit]").forEach(function(btn){
       btn.addEventListener("click",function(e){
         e.preventDefault(); e.stopPropagation();
         openTaskEditor(btn.getAttribute("data-cell-edit"),btn.getAttribute("data-edit-mode")||"link");
+      });
+    });
+    document.querySelectorAll("tr[data-edit-key]").forEach(function(row){
+      function openFullEditor(e){
+        if(!document.body.classList.contains("editing")) return;
+        if(e && e.target && e.target.closest("button,a,input,select,textarea,label")) return;
+        openTaskEditor(row.getAttribute("data-edit-key"),"task");
+      }
+      row.addEventListener("click",openFullEditor);
+      row.addEventListener("keydown",function(e){
+        if((e.key==="Enter" || e.key===" ") && document.body.classList.contains("editing")){
+          e.preventDefault(); openFullEditor(e);
+        }
       });
     });
     document.querySelectorAll("a.linkico").forEach(function(a){
@@ -2865,22 +2977,9 @@ footer{border-color:#C9DDEE;color:#5D7288}
       });
     });
   }
-  function updateStickyTableOffset(){
-    if(window.innerWidth<=820) return;
-    var topbar=document.querySelector(".topbar");
-    var editbar=document.querySelector(".editbar");
-    var controls=document.querySelector(".controls");
-    var offset=(topbar?topbar.offsetHeight:0)
-      +(document.body.classList.contains("editing")&&editbar?editbar.offsetHeight:0)
-      +(controls?controls.offsetHeight:0)+2;
-    document.documentElement.style.setProperty("--table-sticky-top",offset+"px");
-  }
-  window.addEventListener("resize",function(){ requestAnimationFrame(updateStickyTableOffset); });
-
   function refresh(keep){
     var y=keep? window.scrollY : 0;
     renderKpi(); renderRail(); renderExecutive(); renderChips(); renderList();
-    requestAnimationFrame(updateStickyTableOffset);
     if(keep) window.scrollTo(0,y);
   }
 
@@ -2909,7 +3008,7 @@ footer{border-color:#C9DDEE;color:#5D7288}
     b.innerHTML='<span class="dot"></span><span class="lb-full">'+(on?"Đang cập nhật":"Chế độ cập nhật")+'</span><span class="lb-short">'+(on?"Đang sửa":"Cập nhật")+'</span>';
     document.getElementById("lastUpdate").readOnly=!on;
     if(!on && !taskEditorBackdrop.hidden) closeTaskEditor();
-    requestAnimationFrame(updateStickyTableOffset);
+    if(currentView==="plan") renderList();
   }
   document.getElementById("btnEdit").addEventListener("click", function(){ setEdit(!editing); });
   document.getElementById("btnExit").addEventListener("click", function(){ setEdit(false); });
